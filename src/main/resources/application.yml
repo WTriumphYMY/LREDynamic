@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: lre-simulation
+  eureka:
+#    instance:
+#      ip-address: 121.40.171.110
+#      prefer-ip-address: true
+    client:
+      service-url:
+        defaultZone: http://localhost:8761/eureka/
+      register-with-eureka: true
+      fetch-registry: true
+#    instance:
+#      prefer-ip-address: true
+
+server:
+  port: 8081
