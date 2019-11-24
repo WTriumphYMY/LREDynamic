@@ -66,17 +66,24 @@ public class GasBottleCalc {
         for (int i = 1; i < 4; i++){
             if (i < 3){
                 //气瓶
+//                dp[i] = getDp(rho.get(index) + 0.5*h*drho[i-1],
+//                        p.get(index) + 0.5*h*dp[i-1],
+//                        getQ(p.get(index) + 0.5*h*dp[i-1], pe, temp.get(index) + 0.5*h*dtemp[i-1]));
                 dp[i] = getDp(rho.get(index) + 0.5*h*drho[i-1],
                         p.get(index) + 0.5*h*dp[i-1],
-                        getQ(p.get(index) + 0.5*h*dp[i-1], pe, temp.get(index) + 0.5*h*dtemp[i-1]));
-                drho[i] = getDrho(getQ(p.get(index) + 0.5*h*dp[i-1], pe, temp.get(index) + 0.5*h*dtemp[i-1]));
+                        getQ_CA(p.get(index) + 0.5*h*dp[i-1],rho.get(index) + 0.5*h*drho[i-1], pe));
+//                drho[i] = getDrho(getQ(p.get(index) + 0.5*h*dp[i-1], pe, temp.get(index) + 0.5*h*dtemp[i-1]));
+                drho[i] = getDrho(getQ_CA(p.get(index) + 0.5*h*dp[i-1],rho.get(index) + 0.5*h*drho[i-1], pe));
                 dtemp[i] = getDtemp(p.get(index) + 0.5*h*dp[i-1], temp.get(index) + 0.5*h*dtemp[i-1], dp[i-1]);
 
             }else {
                 //气瓶
+//                dp[i] = getDp(rho.get(index) + h*drho[i-1],p.get(index) + h*dp[i-1],
+//                        getQ(p.get(index) + h*dp[i-1], pe, temp.get(index) + h*dtemp[i-1]));
                 dp[i] = getDp(rho.get(index) + h*drho[i-1],p.get(index) + h*dp[i-1],
-                        getQ(p.get(index) + h*dp[i-1], pe, temp.get(index) + h*dtemp[i-1]));
-                drho[i] = getDrho(getQ(p.get(index) + h*dp[i-1], pe, temp.get(index) + h*dtemp[i-1]));
+                        getQ_CA(p.get(index) + h*dp[i-1], rho.get(index) + h*drho[i-1], pe));
+//                drho[i] = getDrho(getQ(p.get(index) + h*dp[i-1], pe, temp.get(index) + h*dtemp[i-1]));
+                drho[i] = getDrho(getQ_CA(p.get(index) + h*dp[i-1],rho.get(index) + h*drho[i-1], pe));
                 dtemp[i] = getDtemp(p.get(index) + h*dp[i-1], temp.get(index) + h*dtemp[i-1], dp[i-1]);
 
                 }
@@ -84,9 +91,10 @@ public class GasBottleCalc {
         //气瓶
         p.add(p.get(index) + h*(dp[0] + 2*dp[1] + 2*dp[2] + dp[3])/6);
         rho.add(rho.get(index) + h*(drho[0] + 2*drho[1] + 2*drho[2] + drho[3])/6);
-        temp.add(temp.get(index) + h*(dtemp[0] + 2*dtemp[1] + 2*dtemp[2] + dtemp[3])/6);
-        q.add(getQ(p.get(index+1), pe,temp.get(index+1)));
-
+//        temp.add(temp.get(index) + h*(dtemp[0] + 2*dtemp[1] + 2*dtemp[2] + dtemp[3])/6);
+        temp.add(getTemp(p.get(index+1)));
+//        q.add(getQ(p.get(index+1), pe,temp.get(index+1)));
+        q.add(getQ_CA(p.get(index+1), rho.get(index+1), pe));
     }
 
     /**
@@ -125,7 +133,18 @@ public class GasBottleCalc {
     }
 
     /**
-     *
+     * 使用流量系数求流量
+     * @param p
+     * @param rho
+     * @param pe
+     * @return
+     */
+    public double getQ_CA(double p, double rho, double pe){
+        return CA*Math.sqrt(2*k*p*rho/(k-1)*(Math.pow(pe/p, 2/k)-Math.pow(pe/p, (k+1)/k)));
+    }
+
+    /**
+     *使用微分计算的温度导数
      * @param p 气瓶压强
      * @param temp 气瓶温度
      * @param dp 压强导数
@@ -136,6 +155,17 @@ public class GasBottleCalc {
         dt = (k-1)*temp*dp/k/p;
         return dt;
     }
+
+    /**
+     * 不使用微分的温度
+     * @param p 气瓶压强
+     * @return 温度
+     */
+    public double getTemp(double p){
+        return gasBottle.getTemp0()*Math.pow(p/gasBottle.getP0(), (k-1)/k);
+    }
+
+
 
     public void outPutToFile(String filePath){
         File resultFile = new File(filePath);

@@ -2,6 +2,9 @@ package cn.edu.nwpu.service;
 
 import cn.edu.nwpu.dto.MonteCarloDTO;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * @InterfaceName MonteCarloService
  * @Author: wkx
@@ -11,5 +14,5 @@ import cn.edu.nwpu.dto.MonteCarloDTO;
  */
 public interface MonteCarloService {
 
-    void monteCalculate(MonteCarloDTO monteCarloDTO);
+    Map<String, List<Double>> monteCalculate(MonteCarloDTO monteCarloDTO);
 }

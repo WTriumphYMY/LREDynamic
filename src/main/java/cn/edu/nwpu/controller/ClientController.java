@@ -1,7 +1,9 @@
 package cn.edu.nwpu.controller;
 
 import cn.edu.nwpu.dto.ConstantSystemDTO;
+import cn.edu.nwpu.dto.MonteCarloDTO;
 import cn.edu.nwpu.service.LreSimulationService;
+import cn.edu.nwpu.service.MonteCarloService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,6 +24,8 @@ public class ClientController {
 
     @Autowired
     private LreSimulationService lreSimulationService;
+    @Autowired
+    private MonteCarloService monteCarloService;
 
     @PostMapping("constDualSystemSim")
     public Map<String, List<Double>> constDualSystemSim(@RequestBody ConstantSystemDTO constantSystemDTO){
@@ -51,5 +55,10 @@ public class ClientController {
     @PostMapping("thrustChamberSim")
     public Map<String, List<Double>> thrustChamberSim(@RequestBody ConstantSystemDTO constantSystemDTO){
         return lreSimulationService.thrustChamberSim(constantSystemDTO);
+    }
+
+    @PostMapping("monteCarloSim")
+    public Map<String, List<Double>> monteCarloSim(@RequestBody MonteCarloDTO monteCarloDTO){
+        return monteCarloService.monteCalculate(monteCarloDTO);
     }
 }

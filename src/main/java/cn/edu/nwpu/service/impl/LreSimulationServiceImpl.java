@@ -3,14 +3,18 @@ package cn.edu.nwpu.service.impl;
 import cn.edu.nwpu.algorithm.calculate.*;
 import cn.edu.nwpu.domain.GasData.GasData;
 import cn.edu.nwpu.domain.GasData.N2GasData;
+import cn.edu.nwpu.domain.LiquidData.LO2Data;
 import cn.edu.nwpu.domain.LiquidData.LiquidData;
+import cn.edu.nwpu.domain.LiquidData.MMHData;
 import cn.edu.nwpu.domain.components.*;
 import cn.edu.nwpu.dto.*;
 import cn.edu.nwpu.service.LreSimulationService;
 import cn.edu.nwpu.utils.MediumFactory;
+import cn.edu.nwpu.utils.ResultShowUtil;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @ClassName ConstDualSystemServiceImpl
@@ -26,6 +30,7 @@ public class LreSimulationServiceImpl implements LreSimulationService {
     public Map<String, List<Double>> constDualSystemSim(ConstantSystemDTO constantSystemDTO) {
         double calTime = Double.parseDouble(constantSystemDTO.getGlobalParasTime());
         double timeStep = Double.parseDouble(constantSystemDTO.getGlobalParasStep());
+
         GasBottle gasBottle = getGasBottle(constantSystemDTO);
         GasBottleCalc gasBottleCalc = new GasBottleCalc(gasBottle);
 
@@ -56,7 +61,7 @@ public class LreSimulationServiceImpl implements LreSimulationService {
         while (time < calTime){
             int index = gasBottleCalc.getP().size()-1;
             gasBottleCalc.execute(reducingValveCalc.getP_high().get(index));
-            reducingValveCalc.execute(gasBottleCalc.getQ().get(index), gasBottleCalc.getTemp().get(index),
+            reducingValveCalc.execute(gasBottleCalc.getP().get(index), gasBottleCalc.getTemp().get(index),
                     liquidTankCalc_LO2.getP().get(index));
             //液氧贮箱与电磁阀
             double rhoin = reducingValveCalc.getP_low().get(index)/reducingValveCalc.getTemp_low().get(index)/reducingValve.getRg();
@@ -72,14 +77,15 @@ public class LreSimulationServiceImpl implements LreSimulationService {
         }
 
         Map<String, List<Double>> resultMap = new TreeMap<>();
-        resultMap.put("t", t);
-        resultMap.put("p_g", gasBottleCalc.getP());
+        java.text.DecimalFormat df = new java.text.DecimalFormat("#.0000");
+        resultMap.put("t", t.stream().map(tt -> Double.parseDouble(df.format(tt))).collect(Collectors.toList()));
+        resultMap.put("p_g", gasBottleCalc.getP().stream().map(p -> p/1e6).collect(Collectors.toList()));
         resultMap.put("q_g", gasBottleCalc.getQ());
         resultMap.put("rho_g", gasBottleCalc.getRho());
         resultMap.put("temp_g", gasBottleCalc.getTemp());
 
-        resultMap.put("phigh", reducingValveCalc.getP_high());
-        resultMap.put("plow", reducingValveCalc.getP_low());
+        resultMap.put("phigh", reducingValveCalc.getP_high().stream().map(p -> p/1e6).collect(Collectors.toList()));
+        resultMap.put("plow", reducingValveCalc.getP_low().stream().map(p -> p/1e6).collect(Collectors.toList()));
         resultMap.put("temphigh", reducingValveCalc.getTemp_high());
         resultMap.put("templow", reducingValveCalc.getTemp_low());
         resultMap.put("qhigh", reducingValveCalc.getQ_high());
@@ -87,8 +93,8 @@ public class LreSimulationServiceImpl implements LreSimulationService {
         resultMap.put("x", reducingValveCalc.getX());
         resultMap.put("u", reducingValveCalc.getU());
 
-        resultMap.put("p_lo2", liquidTankCalc_LO2.getP());
-        resultMap.put("q_lo2", liquidTankCalc_LO2.getQ());
+        resultMap.put("p_lo2", liquidTankCalc_LO2.getP().stream().map(p -> p/1e6).collect(Collectors.toList()));
+        resultMap.put("q_lo2", liquidTankCalc_LO2.getQ().stream().map(p -> p/1e6).collect(Collectors.toList()));
         resultMap.put("rho_lo2", liquidTankCalc_LO2.getRho());
         resultMap.put("v_lo2", liquidTankCalc_LO2.getV());
         resultMap.put("qin_lo2", liquidTankCalc_LO2.getQin());
@@ -98,7 +104,7 @@ public class LreSimulationServiceImpl implements LreSimulationService {
         resultMap.put("q_so2", solenoidValveCalc_LO2.getQ());
         resultMap.put("v_so2", solenoidValveCalc_LO2.getV());
         resultMap.put("x_so2", solenoidValveCalc_LO2.getX());
-        resultMap.put("p_so2", solenoidValveCalc_LO2.getP());
+        resultMap.put("p_so2", solenoidValveCalc_LO2.getP().stream().map(p -> p/1e6).collect(Collectors.toList()));
 
         resultMap.put("p_lmmh", liquidTankCalc_MMH.getP());
         resultMap.put("q_lmmh", liquidTankCalc_MMH.getQ());
@@ -110,12 +116,14 @@ public class LreSimulationServiceImpl implements LreSimulationService {
         resultMap.put("q_smmh", solenoidValveCalc_MMH.getQ());
         resultMap.put("v_smmh", solenoidValveCalc_MMH.getV());
         resultMap.put("x_smmh", solenoidValveCalc_MMH.getX());
-        resultMap.put("p_smmh", solenoidValveCalc_MMH.getP());
+        resultMap.put("p_smmh", solenoidValveCalc_MMH.getP().stream().map(p -> p/1e6).collect(Collectors.toList()));
 
-        resultMap.put("p_com", combustionChamberCalc.getP());
+        resultMap.put("p_com", combustionChamberCalc.getP().stream().map(p -> p/1e6).collect(Collectors.toList()));
         resultMap.put("r_com", combustionChamberCalc.getR());
-        resultMap.put("f_com", combustionChamberCalc.getF());
+        resultMap.put("f_com", combustionChamberCalc.getF().stream().map(f -> f/1e3).collect(Collectors.toList()));
         resultMap.put("q_com", combustionChamberCalc.getQ());
+        resultMap.put("isp", combustionChamberCalc.getIsp());
+//        ResultShowUtil.showChart(resultMap);
         return resultMap;
     }
 
@@ -142,7 +150,6 @@ public class LreSimulationServiceImpl implements LreSimulationService {
         resultMap.put("q", gasBottleCalc.getQ());
         resultMap.put("rho", gasBottleCalc.getRho());
         resultMap.put("temp", gasBottleCalc.getTemp());
-//        ResultShowUtil.showChart(resultMap);
         return resultMap;
     }
 
@@ -317,7 +324,7 @@ public class LreSimulationServiceImpl implements LreSimulationService {
         LiquidData oxid = MediumFactory.getLiquidData(constantSystemDTO.getOxidTankFuel());
         SimpleLiquidOrifice simpleLiquidOrifice = new SimpleLiquidOrifice(oxid);
         simpleLiquidOrifice.setD(Double.parseDouble(constantSystemDTO.getOxidLiquidOrificeD()));
-        simpleLiquidOrifice.setCq(Double.parseDouble(constantSystemDTO.getOxidLiquidOrificePc()));
+        simpleLiquidOrifice.setPressureCoefficience(Double.parseDouble(constantSystemDTO.getOxidLiquidOrificePc()));
         return simpleLiquidOrifice;
     }
 
@@ -325,7 +332,7 @@ public class LreSimulationServiceImpl implements LreSimulationService {
         LiquidData fuel = MediumFactory.getLiquidData(constantSystemDTO.getFuelTankFuel());
         SimpleLiquidOrifice simpleLiquidOrifice = new SimpleLiquidOrifice(fuel);
         simpleLiquidOrifice.setD(Double.parseDouble(constantSystemDTO.getFuelLiquidOrificeD()));
-        simpleLiquidOrifice.setCq(Double.parseDouble(constantSystemDTO.getFuelLiquidOrificePc()));
+        simpleLiquidOrifice.setPressureCoefficience(Double.parseDouble(constantSystemDTO.getFuelLiquidOrificePc()));
         return simpleLiquidOrifice;
     }
 
@@ -366,7 +373,8 @@ public class LreSimulationServiceImpl implements LreSimulationService {
         combustionChamber.setVc(Double.parseDouble(constantSystemDTO.getThrustChamberV()));
         combustionChamber.setTauc(Double.parseDouble(constantSystemDTO.getThrustChamberTauc()));
         combustionChamber.setK(Double.parseDouble(constantSystemDTO.getThrustChamberK()));
-        combustionChamber.setArea_throat(Double.parseDouble(constantSystemDTO.getThrustChamberArea()));
+        double d = Double.parseDouble(constantSystemDTO.getThrustChamberD());
+        combustionChamber.setArea_throat(d*d*0.25*Math.PI);
         combustionChamber.setEps(Double.parseDouble(constantSystemDTO.getThrustChamberEps()));
         combustionChamber.setPa(Double.parseDouble(constantSystemDTO.getThrustChamberPa()));
         return combustionChamber;

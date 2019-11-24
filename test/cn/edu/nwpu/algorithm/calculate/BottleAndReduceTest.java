@@ -5,9 +5,16 @@ import cn.edu.nwpu.domain.GasData.N2GasData;
 import cn.edu.nwpu.domain.LiquidData.LO2Data;
 import cn.edu.nwpu.domain.LiquidData.MMHData;
 import cn.edu.nwpu.domain.components.*;
+import cn.edu.nwpu.dto.ConstantSystemDTO;
+import cn.edu.nwpu.service.LreSimulationService;
+import cn.edu.nwpu.service.impl.LreSimulationServiceImpl;
 import cn.edu.nwpu.utils.ResultShowUtil;
 import org.junit.Test;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -20,10 +27,10 @@ import java.util.*;
 public class BottleAndReduceTest {
 
     @Test
-    public void testBottleAndReduce(){
+    public void testBottleAndReduce() throws Exception{
         GasBottle gasBottle = new GasBottle(new N2GasData());
         gasBottle.setCA(3.5e-4);
-        gasBottle.setVc(3.0);//0.05
+        gasBottle.setVc(5.0);//0.05
         gasBottle.setP0(2.2e7);
 //        gasBottle.setRho0(0.1785);
         gasBottle.setTemp0(300.0);
@@ -37,8 +44,8 @@ public class BottleAndReduceTest {
         reducingValve.setM(0.166);
         reducingValve.setAmb(0.00090792);
         reducingValve.setAvc(1.9635e-5);
-        reducingValve.setV1(6.15e-6);
-        reducingValve.setV2(6.15e-6);
+        reducingValve.setV1(6e-5);
+        reducingValve.setV2(6e-5);
         reducingValve.setXstop(0.0002);
 
         ReducingValveCalc reducingValveCalc = new ReducingValveCalc(reducingValve);
@@ -62,7 +69,7 @@ public class BottleAndReduceTest {
         LiquidTankCalc liquidTankCalc_MMH = new LiquidTankCalc(liquidTank_MMH);
 
         SimpleLiquidOrifice simpleLiquidOrifice_LO2 = new SimpleLiquidOrifice(new LO2Data());
-        simpleLiquidOrifice_LO2.setD(0.005);
+        simpleLiquidOrifice_LO2.setD(0.005);//0.005
         simpleLiquidOrifice_LO2.setPressureCoefficience(0.997);
 
         Solenoidvalve solenoidvalve_LO2 = new Solenoidvalve(new LO2Data(), simpleLiquidOrifice_LO2);
@@ -80,7 +87,7 @@ public class BottleAndReduceTest {
         SolenoidValveCalc solenoidValveCalc_LO2 = new SolenoidValveCalc(solenoidvalve_LO2);
 
         SimpleLiquidOrifice simpleLiquidOrifice_MMH = new SimpleLiquidOrifice(new LO2Data());
-        simpleLiquidOrifice_MMH.setD(0.005);
+        simpleLiquidOrifice_MMH.setD(0.005);//0.005
         simpleLiquidOrifice_MMH.setPressureCoefficience(0.997);
 
         Solenoidvalve solenoidvalve_MMH = new Solenoidvalve(new MMHData(), simpleLiquidOrifice_MMH);
@@ -102,7 +109,7 @@ public class BottleAndReduceTest {
         combustionChamber.setTauc(0.0);
         combustionChamber.setK(1.25);
         combustionChamber.setArea_throat(0.007*0.007*0.25*Math.PI);
-        combustionChamber.setEps(25.72);
+        combustionChamber.setEps(5);//25.72
         combustionChamber.setPa(101325.0);
 
         CombustionChamberCalc combustionChamberCalc = new CombustionChamberCalc(combustionChamber);
@@ -113,7 +120,7 @@ public class BottleAndReduceTest {
         while (time < 2.0){
             int index = gasBottleCalc.getP().size()-1;
             gasBottleCalc.execute(reducingValveCalc.getP_high().get(index));
-            reducingValveCalc.execute(gasBottleCalc.getQ().get(index), gasBottleCalc.getTemp().get(index),
+            reducingValveCalc.execute(gasBottleCalc.getP().get(index), gasBottleCalc.getTemp().get(index),
                     liquidTankCalc_LO2.getP().get(index));
             //液氧贮箱与电磁阀
             double rhoin = reducingValveCalc.getP_low().get(index)/reducingValveCalc.getTemp_low().get(index)/reducingValve.getRg();
@@ -173,7 +180,114 @@ public class BottleAndReduceTest {
         resultMap.put("r_com", combustionChamberCalc.getR());
         resultMap.put("f_com", combustionChamberCalc.getF());
         resultMap.put("q_com", combustionChamberCalc.getQ());
+
+        ResultShowUtil.showChart(resultMap);
+
+        File file = new File("E:\\ProgramTest\\system_test.txt");
+        Path path = file.toPath();
+        Files.deleteIfExists(path);
+        BufferedWriter bw = Files.newBufferedWriter(path);
+        bw.write("t\tp_g\tq_g\trho_g\ttemp_g\tphigh\tplow\ttemphigh\ttemplow\tqhigh\tqlow\tx\tu\tp_lo2\tq_lo2\trho_lo2\t" +
+                "v_lo2\tphi_o2\tpsi_o2\tq_so2\tv_so2\tx_so2\tp_so2\tp_lmmh\tq_lmmh\trho_lmmh\tv_lmmh\tphi_mmh\tpsi_mmh\tq_smmh\tv_smmh\tx_smmh\tp_smmh\t" +
+                "p_com\tr_com\tf_com\tq_com\tIsp\t");
+        bw.newLine();
+        for (int i = 0; i < resultMap.get("t").size(); i++) {
+            bw.write(resultMap.get("t").get(i)+"\t"+resultMap.get("p_g").get(i)+"\t"+
+                    resultMap.get("q_g").get(i)+"\t"+resultMap.get("rho_g").get(i)+"\t"+
+                    resultMap.get("temp_g").get(i)+"\t"+resultMap.get("phigh").get(i)/1e6+"\t"+
+                    resultMap.get("plow").get(i)/1e6+"\t"+resultMap.get("temphigh").get(i)+"\t"+
+                    resultMap.get("templow").get(i)+"\t"+resultMap.get("qhigh").get(i)+"\t"+
+                    resultMap.get("qlow").get(i)+"\t"+resultMap.get("x").get(i)+"\t"+
+                    resultMap.get("u").get(i)+"\t"+resultMap.get("p_lo2").get(i)/1e6+"\t"+
+                    resultMap.get("q_lo2").get(i)+"\t"+resultMap.get("rho_lo2").get(i)+"\t"+
+                    resultMap.get("v_lo2").get(i)+"\t"+resultMap.get("phi_o2").get(i)+"\t"+
+                    resultMap.get("psi_o2").get(i)+"\t"+resultMap.get("q_so2").get(i)+"\t"+
+                    resultMap.get("v_so2").get(i)+"\t"+resultMap.get("x_so2").get(i)+"\t"+
+                    resultMap.get("p_so2").get(i)+"\t"+resultMap.get("p_lmmh").get(i)/1e6+"\t"+
+                    resultMap.get("q_lmmh").get(i)+"\t"+resultMap.get("rho_lmmh").get(i)+"\t"+
+                    resultMap.get("v_lmmh").get(i)+"\t"+resultMap.get("phi_mmh").get(i)+"\t"+
+                    resultMap.get("psi_mmh").get(i)+"\t"+resultMap.get("q_smmh").get(i)+"\t"+
+                    resultMap.get("v_smmh").get(i)+"\t"+resultMap.get("x_smmh").get(i)+"\t"+
+                    resultMap.get("p_smmh").get(i)+"\t"+resultMap.get("p_com").get(i)/1e6+"\t"+
+                    resultMap.get("r_com").get(i)+"\t"+resultMap.get("f_com").get(i)/1e3+"\t"+
+                    resultMap.get("q_com").get(i)+"\t"+resultMap.get("f_com").get(i)/(resultMap.get("q_so2").get(i)+resultMap.get("q_smmh").get(i)));
+            bw.newLine();
+        }
+        bw.close();
+
         ResultShowUtil.showChart(resultMap);
 //        ResultShowUtil.writeToFile(resultMap);
+    }
+
+    @Test
+    public void testLreSim(){
+        LreSimulationService lreSimulationService = new LreSimulationServiceImpl();
+        ConstantSystemDTO constantSystemDTO = new ConstantSystemDTO();
+        constantSystemDTO.setBottleCA("3.5e-4");
+        constantSystemDTO.setBottleVol("5.0");
+        constantSystemDTO.setBottlePressure("2.2e7");
+        constantSystemDTO.setBottleTemperature("300.0");
+        constantSystemDTO.setBottleGas("N2");
+
+        constantSystemDTO.setReduceC("5010");
+        constantSystemDTO.setReduceK("390700");
+        constantSystemDTO.setReduceF("3516.3");
+        constantSystemDTO.setReduceM("0.166");
+        constantSystemDTO.setReduceAmb("0.00090792");
+        constantSystemDTO.setReduceAvc("1.9635e-5");
+        constantSystemDTO.setReduceV1("6e-5");
+        constantSystemDTO.setReduceV2("6e-5");
+        constantSystemDTO.setReduceXstop("0.0002");
+
+        constantSystemDTO.setOxidTankCA("2.663e-5");
+        constantSystemDTO.setOxidTankV0("0.00011");
+        constantSystemDTO.setOxidTankPressure("101325.0");
+        constantSystemDTO.setOxidTankFuel("LO2");
+
+        constantSystemDTO.setFuelTankCA("2.663e-5");
+        constantSystemDTO.setFuelTankV0("0.00011");
+        constantSystemDTO.setFuelTankPressure("101325.0");
+        constantSystemDTO.setFuelTankFuel("MMH");
+
+        constantSystemDTO.setOxidLiquidOrificeD("0.005");
+        constantSystemDTO.setOxidLiquidOrificePc("0.997");
+
+        constantSystemDTO.setFuelLiquidOrificeD("0.005");
+        constantSystemDTO.setFuelLiquidOrificePc("0.997");
+
+        constantSystemDTO.setOxidSolenoidR("23.3");
+        constantSystemDTO.setOxidSolenoidN("1700");
+        constantSystemDTO.setOxidSolenoidU("28");
+        constantSystemDTO.setOxidSolenoidSigma("1.3");
+        constantSystemDTO.setOxidSolenoidSm("0.0002");
+        constantSystemDTO.setOxidSolenoidK("2800");
+        constantSystemDTO.setOxidSolenoidM("0.021");
+        constantSystemDTO.setOxidSolenoidF("8.68");
+        constantSystemDTO.setOxidSolenoidD("0.0035");
+        constantSystemDTO.setOxidSolenoidXstop("0.0004");
+
+        constantSystemDTO.setFuelSolenoidR("23.3");
+        constantSystemDTO.setFuelSolenoidN("1700");
+        constantSystemDTO.setFuelSolenoidU("28");
+        constantSystemDTO.setFuelSolenoidSigma("1.3");
+        constantSystemDTO.setFuelSolenoidSm("0.0002");
+        constantSystemDTO.setFuelSolenoidK("2800");
+        constantSystemDTO.setFuelSolenoidM("0.021");
+        constantSystemDTO.setFuelSolenoidF("8.68");
+        constantSystemDTO.setFuelSolenoidD("0.0035");
+        constantSystemDTO.setFuelSolenoidXstop("0.0004");
+
+        constantSystemDTO.setThrustChamberV("7.8289e-5");
+        constantSystemDTO.setThrustChamberTauc("0.0");
+        constantSystemDTO.setThrustChamberK("1.25");
+        constantSystemDTO.setThrustChamberD("0.007");
+        constantSystemDTO.setThrustChamberEps("5");
+        constantSystemDTO.setThrustChamberPa("101325.0");
+
+        constantSystemDTO.setGlobalParasStep("0.0001");
+        constantSystemDTO.setGlobalParasTime("2");
+
+        Map<String, List<Double>> resultMap = lreSimulationService.constDualSystemSim(constantSystemDTO);
+        ResultShowUtil.showChart(resultMap);
     }
 }

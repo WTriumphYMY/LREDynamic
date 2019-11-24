@@ -121,7 +121,7 @@ public class SolenoidValveCalc {
     /**
      *
      * @param dphi
-     * @return
+     * @return dpsi
      */
     public double getDpsi(double dphi) {
         return n * dphi;

@@ -30,6 +30,7 @@ public class CombustionChamberCalc {
     private List<Double> r = new ArrayList<>();//混合比
     private List<Double> q = new ArrayList<>();//质量流率，kg/s
     private List<Double> f = new ArrayList<>();//推力
+    private List<Double> isp = new ArrayList<>();//比冲
 
     private double[] dp = new double[4];
     private double[] dr = new double[4];
@@ -48,6 +49,7 @@ public class CombustionChamberCalc {
         r.add(1.0);
         q.add(0.0);
         f.add(0.0);
+        isp.add(0.0);
         this.h = GlobleParas.TIME_STEP;
     }
 
@@ -75,6 +77,7 @@ public class CombustionChamberCalc {
         r.add(r.get(index) + h*(dr[0] + 2*dr[1] + 2*dr[2] + dr[3])/6);
         f.add(getForce(p.get(index+1)));
         q.add(getQout(p.get(index+1), getRT(r.get(index+1))));
+        isp.add(f.get(index+1)/(qo+qf));
     }
 
     /**
@@ -163,5 +166,9 @@ public class CombustionChamberCalc {
 
     public List<Double> getF() {
         return f;
+    }
+
+    public List<Double> getIsp() {
+        return isp;
     }
 }

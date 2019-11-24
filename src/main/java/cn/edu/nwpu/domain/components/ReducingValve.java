@@ -26,6 +26,7 @@ public class ReducingValve {
     private double V1;//高压腔体积6e-6
     private double V2;//低压腔体积6e-6
     private double xstop;//阀芯最大位移0.0002
+    private double xs;//弹簧预压缩量
 
     public List<Double> x = new ArrayList<>(); //阀芯位移
     public List<Double> u = new ArrayList<>(); //阀芯速度
@@ -256,5 +257,13 @@ public class ReducingValve {
 
     public void setRg(double rg) {
         Rg = rg;
+    }
+
+    public double getXs() {
+        return xs;
+    }
+
+    public void setXs(double xs) {
+        this.xs = xs;
     }
 }

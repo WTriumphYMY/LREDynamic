@@ -125,7 +125,7 @@ public class LreSimulationServiceImplTest {
         constantSystemDTO.setThrustChamberV("7.8289e-5");
         constantSystemDTO.setThrustChamberTauc("0.0");
         constantSystemDTO.setThrustChamberK("1.25");
-        constantSystemDTO.setThrustChamberArea("7.8489e-6");
+        constantSystemDTO.setThrustChamberD("0.007");
         constantSystemDTO.setThrustChamberEps("25.72");
         constantSystemDTO.setThrustChamberPa("101325.0");
 
